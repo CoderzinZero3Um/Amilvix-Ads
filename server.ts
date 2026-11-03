@@ -20,7 +20,8 @@ const createMailTransporter = () => {
   const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
   const port = Number(process.env.SMTP_PORT) || 465;
   const secure = process.env.SMTP_SECURE === 'false' ? false : (port === 465);
-  const user = process.env.SMTP_USER || 'vendas@amilvix.com.br';
+  // Authenticated SMTP mailbox on Hostinger
+  const user = process.env.SMTP_USER || 'smtp@amilvix.com.br';
   const pass = process.env.SMTP_PASS || 'Amilvix@2026';
 
   return nodemailer.createTransport({
@@ -48,7 +49,8 @@ app.get('/api/test-smtp', async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Conexão com servidor SMTP Hostinger (smtp.hostinger.com:465) autenticada com sucesso!',
-      user: process.env.SMTP_USER || 'vendas@amilvix.com.br',
+      user: process.env.SMTP_USER || 'smtp@amilvix.com.br',
+      destination: process.env.SMTP_TO || 'vendas@amilvix.com.br',
     });
   } catch (error: any) {
     console.error('[SMTP VERIFY ERRO]', error);
@@ -122,22 +124,24 @@ app.post('/api/cotacao', async (req, res) => {
     `;
 
     const transporter = createMailTransporter();
+    const fromAddress = process.env.SMTP_FROM || `"Amilvix Automação" <smtp@amilvix.com.br>`;
+    const toAddress = process.env.SMTP_TO || 'vendas@amilvix.com.br';
     
     // Send email using verified Hostinger SMTP
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || `"Amilvix Automação" <${process.env.SMTP_USER || 'vendas@amilvix.com.br'}>`,
-      to: 'vendas@amilvix.com.br',
+      from: fromAddress,
+      to: toAddress,
       replyTo: email,
       subject: `[Nova Cotação Posital Fraba] ${empresa} - Protocolo ${leadProtocolo}`,
       html: htmlContent,
       text: `NOVA COTAÇÃO POSITAL FRABA\nProtocolo: ${leadProtocolo}\nSolicitante: ${nome}\nEmpresa: ${empresa}\nE-mail: ${email}\nTelefone: ${telefone}\n\nDescrição:\n${descricao}`,
     });
 
-    console.log(`[SMTP SUCESSO] E-mail enviado para vendas@amilvix.com.br! MessageId: ${info.messageId}`);
+    console.log(`[SMTP SUCESSO] E-mail enviado para ${toAddress}! MessageId: ${info.messageId}`);
 
     return res.status(200).json({
       success: true,
-      message: 'Cotação enviada com sucesso para vendas@amilvix.com.br via Hostinger SMTP!',
+      message: `Cotação enviada com sucesso para ${toAddress} via Hostinger SMTP!`,
       protocolo: leadProtocolo,
       messageId: info.messageId,
     });
