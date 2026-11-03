@@ -474,7 +474,18 @@ export default function App() {
                   </div>
                 ) : (
                   /* Formulário de Coleta */
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form
+                    action="https://formsubmit.co/vendas@amilvix.com.br"
+                    method="POST"
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                  >
+                    {/* Campos de Configuração do Envio para vendas@amilvix.com.br */}
+                    <input type="hidden" name="_to" value="vendas@amilvix.com.br" />
+                    <input type="hidden" name="_subject" value={`[Nova Cotação Posital Fraba] ${formData.empresa || 'Novo Lead'}`} />
+                    <input type="hidden" name="_captcha" value="false" />
+                    <input type="hidden" name="_template" value="table" />
+                    <input type="hidden" name="Destinatario" value="vendas@amilvix.com.br" />
                     {/* Nome do Solicitante */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
@@ -486,6 +497,7 @@ export default function App() {
                         </div>
                         <input
                           type="text"
+                          name="nome"
                           required
                           value={formData.nome}
                           onChange={(e) => {
@@ -512,6 +524,7 @@ export default function App() {
                         </div>
                         <input
                           type="text"
+                          name="empresa_cnpj"
                           required
                           value={formData.empresa}
                           onChange={(e) => {
@@ -539,6 +552,7 @@ export default function App() {
                           </div>
                           <input
                             type="email"
+                            name="email"
                             required
                             value={formData.email}
                             onChange={(e) => {
@@ -564,6 +578,7 @@ export default function App() {
                           </div>
                           <input
                             type="tel"
+                            name="telefone_whatsapp"
                             required
                             value={formData.telefone}
                             onChange={(e) => {
@@ -589,6 +604,7 @@ export default function App() {
                         <span className="text-[10px] text-slate-500">Aceitamos fotos de placas</span>
                       </div>
                       <textarea
+                        name="codigo_ou_descricao"
                         required
                         rows={3}
                         value={formData.descricao}

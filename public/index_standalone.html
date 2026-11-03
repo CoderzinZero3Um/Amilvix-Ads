@@ -233,7 +233,20 @@
             </div>
 
             <!-- Form Container -->
-            <form id="quoteForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            <form
+              id="quoteForm"
+              action="https://formsubmit.co/vendas@amilvix.com.br"
+              method="POST"
+              onsubmit="handleFormSubmit(event)"
+              class="space-y-4"
+            >
+              <!-- Campos de Configuração do Envio para vendas@amilvix.com.br -->
+              <input type="hidden" name="_to" value="vendas@amilvix.com.br">
+              <input type="hidden" name="_subject" value="[Nova Cotação Posital Fraba - Amilvix]">
+              <input type="hidden" name="_captcha" value="false">
+              <input type="hidden" name="_template" value="table">
+              <input type="hidden" name="Destinatario" value="vendas@amilvix.com.br">
+
               <!-- Nome do Solicitante -->
               <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
