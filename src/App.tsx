@@ -84,7 +84,8 @@ export default function App() {
 
   const phoneDisplay = '(27) 3441-5035';
   const phoneCallable = '+552734415035';
-  const whatsappNumber = '552734415035';
+  const whatsappDisplay = '(27) 99698-6655';
+  const whatsappNumber = '5527996986655';
 
   const defaultWhatsappMessage = encodeURIComponent(
     'Olá, Amilvix Automação! Gostaria de uma cotação técnica para produtos Posital Fraba (Encoders / Inclinômetros). Vim através do anúncio no Google.'
@@ -1123,7 +1124,7 @@ export default function App() {
               </div>
               <div className="text-[11px] text-slate-400 space-y-1">
                 <div>Central Telefônica: (27) 3441-5035</div>
-                <div>Plantão Técnico WhatsApp: (27) 3441-5035</div>
+                <div>Plantão Técnico WhatsApp: (27) 99698-6655</div>
                 <div>E-mail de Vendas: vendas@amilvix.com.br</div>
                 <div>Horário: Segunda a Sexta, das 07h30 às 17h30</div>
               </div>
