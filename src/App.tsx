@@ -171,16 +171,19 @@ export default function App() {
         console.info('[Hostinger SMTP Success]', result);
       } else {
         console.warn('[Hostinger SMTP Warning / Fallback to multi-channel]', result);
-        // Fallback to Web3Forms / FormSubmit if SMTP has transient connection issue
-        fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
+        // Fallback to Web3Forms to ensure delivery even if server is static
+        fetch('https://api.web3forms.com/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
+            access_key: 'e39da33e-d67d-419b-ab09-fb47d51ee9cf',
+            from_name: 'Amilvix Landing Page',
+            subject: `[Nova Cotação Posital Fraba] ${formData.empresa} - Protocolo ${generatedProtocol}`,
+            to_email: 'vendas@amilvix.com.br',
+            replyto: formData.email,
             ...payload,
-            _captcha: 'false',
-            _template: 'table',
           }),
-        }).catch((e) => console.warn('FormSubmit backup:', e));
+        }).catch((e) => console.warn('Web3Forms backup:', e));
       }
     } catch (err) {
       console.warn('Erro ao disparar cotação:', err);
