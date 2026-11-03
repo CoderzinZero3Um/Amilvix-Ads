@@ -158,29 +158,46 @@ export default function App() {
     };
 
     try {
-      // 1. Send to Formspree endpoint configured to forward to vendas@amilvix.com.br
-      // FormSubmit / Formspree provides reliable submission directly to the recipient mailbox
+      // 1. Send to internal backend API (/api/cotacao) which sends via SMTP if configured on server
+      const internalApiPromise = fetch('/api/cotacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then((r) => r.json())
+        .catch((err) => console.warn('Internal API error:', err));
+
+      // 2. Also send via Web3Forms (A free, reliable direct-to-inbox form service that doesn't block unconfirmed domains)
+      const web3FormsPromise = fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: 'e39da33e-d67d-419b-ab09-fb47d51ee9cf', // Web3Forms Public Key or fallback
+          from_name: 'Amilvix Landing Page',
+          subject: `[Nova Cotação Posital Fraba] ${formData.empresa} - Protocolo ${generatedProtocol}`,
+          to_email: 'vendas@amilvix.com.br',
+          replyto: formData.email,
+          ...payload,
+        }),
+      }).catch((err) => console.warn('Web3Forms error:', err));
+
+      // 3. Also send to FormSubmit as redundant backup
       const formSubmitPromise = fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           ...payload,
           _captcha: 'false',
           _template: 'table',
         }),
-      }).catch((err) => console.warn('FormSubmit envio:', err));
+      }).catch((err) => console.warn('FormSubmit error:', err));
 
-      // 2. Also send to our backend /api/cotacao (when deployed with Node.js/Express)
-      const internalApiPromise = fetch('/api/cotacao', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }).catch((err) => console.warn('Internal API envio:', err));
-
-      await Promise.race([formSubmitPromise, internalApiPromise, new Promise((res) => setTimeout(res, 1200))]);
+      await Promise.race([
+        internalApiPromise,
+        web3FormsPromise,
+        formSubmitPromise,
+        new Promise((res) => setTimeout(res, 1500)),
+      ]);
     } catch (err) {
       console.warn('Processamento de cotação finalizado:', err);
     } finally {
