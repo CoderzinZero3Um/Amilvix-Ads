@@ -1,0 +1,6 @@
+{
+  "name": "Amilvix Automação - Distribuidor Posital Fraba Brasil",
+  "description": "Distribuidor autorizado Posital Fraba no Brasil. Encoders industriais e inclinômetros de alta precisão para mineração, siderurgia, portos e offshore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
