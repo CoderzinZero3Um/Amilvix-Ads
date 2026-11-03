@@ -1,0 +1,6 @@
+{
+  "summary": "Plano de implementação para ativar o envio funcional de e-mails via Hostinger SMTP autenticado no Node.js/Express, integrando carregamento automático de variáveis (.env), montagem da rota /api/cotacao tanto no Vite dev server quanto no Express de produção, e validação com tratamento de erro em tempo real na interface.",
+  "updatedAt": "2026-11-03T18:52:30.005227118Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

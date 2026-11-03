@@ -158,48 +158,32 @@ export default function App() {
     };
 
     try {
-      // 1. Send to internal backend API (/api/cotacao) which sends via SMTP if configured on server
-      const internalApiPromise = fetch('/api/cotacao', {
+      // 1. Direct call to authenticated Hostinger SMTP endpoint
+      const response = await fetch('/api/cotacao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      })
-        .then((r) => r.json())
-        .catch((err) => console.warn('Internal API error:', err));
+      });
 
-      // 2. Also send via Web3Forms (A free, reliable direct-to-inbox form service that doesn't block unconfirmed domains)
-      const web3FormsPromise = fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          access_key: 'e39da33e-d67d-419b-ab09-fb47d51ee9cf', // Web3Forms Public Key or fallback
-          from_name: 'Amilvix Landing Page',
-          subject: `[Nova Cotação Posital Fraba] ${formData.empresa} - Protocolo ${generatedProtocol}`,
-          to_email: 'vendas@amilvix.com.br',
-          replyto: formData.email,
-          ...payload,
-        }),
-      }).catch((err) => console.warn('Web3Forms error:', err));
+      const result = await response.json().catch(() => ({}));
 
-      // 3. Also send to FormSubmit as redundant backup
-      const formSubmitPromise = fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          ...payload,
-          _captcha: 'false',
-          _template: 'table',
-        }),
-      }).catch((err) => console.warn('FormSubmit error:', err));
-
-      await Promise.race([
-        internalApiPromise,
-        web3FormsPromise,
-        formSubmitPromise,
-        new Promise((res) => setTimeout(res, 1500)),
-      ]);
+      if (response.ok && result.success) {
+        console.info('[Hostinger SMTP Success]', result);
+      } else {
+        console.warn('[Hostinger SMTP Warning / Fallback to multi-channel]', result);
+        // Fallback to Web3Forms / FormSubmit if SMTP has transient connection issue
+        fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            ...payload,
+            _captcha: 'false',
+            _template: 'table',
+          }),
+        }).catch((e) => console.warn('FormSubmit backup:', e));
+      }
     } catch (err) {
-      console.warn('Processamento de cotação finalizado:', err);
+      console.warn('Erro ao disparar cotação:', err);
     } finally {
       setProtocolNumber(generatedProtocol);
       setIsSubmitting(false);
