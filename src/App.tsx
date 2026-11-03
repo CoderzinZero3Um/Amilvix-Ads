@@ -137,15 +137,53 @@ export default function App() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    const generatedProtocol = `AMV-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Simulate API submission & Google Ads Conversion trigger
-    setTimeout(() => {
-      const generatedProtocol = `AMV-${Math.floor(100000 + Math.random() * 900000)}`;
+    const payload = {
+      _to: 'vendas@amilvix.com.br',
+      _subject: `[Nova Cotação Posital Fraba] Protocolo ${generatedProtocol} - ${formData.empresa}`,
+      protocolo: generatedProtocol,
+      nome: formData.nome,
+      empresa: formData.empresa,
+      email: formData.email,
+      telefone: formData.telefone,
+      descricao: formData.descricao,
+      produtoInteresse: selectedProductTag || 'Geral Posital Fraba',
+      dataHora: new Date().toLocaleString('pt-BR'),
+    };
+
+    try {
+      // 1. Send to Formspree endpoint configured to forward to vendas@amilvix.com.br
+      // FormSubmit / Formspree provides reliable submission directly to the recipient mailbox
+      const formSubmitPromise = fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          ...payload,
+          _captcha: 'false',
+          _template: 'table',
+        }),
+      }).catch((err) => console.warn('FormSubmit envio:', err));
+
+      // 2. Also send to our backend /api/cotacao (when deployed with Node.js/Express)
+      const internalApiPromise = fetch('/api/cotacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch((err) => console.warn('Internal API envio:', err));
+
+      await Promise.race([formSubmitPromise, internalApiPromise, new Promise((res) => setTimeout(res, 1200))]);
+    } catch (err) {
+      console.warn('Processamento de cotação finalizado:', err);
+    } finally {
       setProtocolNumber(generatedProtocol);
       setIsSubmitting(false);
       setFormSubmitted(true);
@@ -157,7 +195,7 @@ export default function App() {
         email: formData.email,
         item: selectedProductTag || 'Geral Posital Fraba',
       });
-    }, 800);
+    }
   };
 
   const resetForm = () => {

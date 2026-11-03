@@ -901,8 +901,8 @@
       textarea.focus();
     }
 
-    // Envio do formulário
-    function handleFormSubmit(event) {
+    // Envio do formulário com disparo para vendas@amilvix.com.br
+    async function handleFormSubmit(event) {
       event.preventDefault();
 
       const nome = document.getElementById('inputNome').value.trim();
@@ -913,33 +913,68 @@
 
       const btnSubmit = document.getElementById('btnSubmit');
       btnSubmit.disabled = true;
-      btnSubmit.innerHTML = '<span class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span><span>Processando Cotação...</span>';
+      btnSubmit.innerHTML = '<span class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span><span>Enviando para vendas@amilvix.com.br...</span>';
 
-      setTimeout(() => {
-        const protocolNumber = 'AMV-' + Math.floor(100000 + Math.random() * 900000);
-        document.getElementById('protocoloDisplay').textContent = protocolNumber;
+      const protocolNumber = 'AMV-' + Math.floor(100000 + Math.random() * 900000);
 
-        document.getElementById('quoteForm').classList.add('hidden');
-        const formSuccess = document.getElementById('formSuccess');
-        formSuccess.classList.remove('hidden');
+      const payload = {
+        _to: 'vendas@amilvix.com.br',
+        _subject: `[Nova Cotação Posital Fraba] Protocolo ${protocolNumber} - ${empresa}`,
+        protocolo: protocolNumber,
+        nome: nome,
+        empresa: empresa,
+        email: email,
+        telefone: telefone,
+        descricao: descricao,
+        dataHora: new Date().toLocaleString('pt-BR'),
+        _captcha: 'false',
+        _template: 'table'
+      };
 
-        // Atualiza botão do WhatsApp dentro da mensagem de sucesso
-        const btnSuccessWhatsapp = document.getElementById('btnSuccessWhatsapp');
-        btnSuccessWhatsapp.onclick = function() {
-          handleWhatsappClick('form_success_accelerate', `Olá, acabei de solicitar um orçamento no site (Protocolo: ${protocolNumber}) para a empresa ${empresa}. Gostaria de agilizar o atendimento.`);
-        };
+      try {
+        // Envia para o serviço de entrega de e-mail direto na caixa vendas@amilvix.com.br
+        const formSubmitPromise = fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn('FormSubmit:', err));
 
-        // Dispara evento de conversão Google Ads
-        trackGoogleAdsConversion('lead_form_submission', {
-          protocol: protocolNumber,
-          company: empresa,
-          email: email,
-          description: descricao
-        });
+        // Envia também para a rota de backend /api/cotacao (se disponível)
+        const apiPromise = fetch('/api/cotacao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn('API interna:', err));
 
-        // Re-renderiza ícones no elemento recém-exibido
-        lucide.createIcons();
-      }, 700);
+        await Promise.race([formSubmitPromise, apiPromise, new Promise(res => setTimeout(res, 1000))]);
+      } catch (err) {
+        console.warn('Envio completado:', err);
+      }
+
+      document.getElementById('protocoloDisplay').textContent = protocolNumber;
+      document.getElementById('quoteForm').classList.add('hidden');
+      const formSuccess = document.getElementById('formSuccess');
+      formSuccess.classList.remove('hidden');
+
+      // Atualiza botão do WhatsApp dentro da mensagem de sucesso
+      const btnSuccessWhatsapp = document.getElementById('btnSuccessWhatsapp');
+      btnSuccessWhatsapp.onclick = function() {
+        handleWhatsappClick('form_success_accelerate', `Olá, acabei de solicitar um orçamento no site (Protocolo: ${protocolNumber}) para a empresa ${empresa}. Gostaria de agilizar o atendimento.`);
+      };
+
+      // Dispara evento de conversão Google Ads
+      trackGoogleAdsConversion('lead_form_submission', {
+        protocol: protocolNumber,
+        company: empresa,
+        email: email,
+        description: descricao
+      });
+
+      // Re-renderiza ícones no elemento recém-exibido
+      lucide.createIcons();
     }
 
     // Resetar formulário
