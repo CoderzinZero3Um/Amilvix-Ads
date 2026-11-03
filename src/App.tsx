@@ -158,35 +158,61 @@ export default function App() {
     };
 
     try {
-      // 1. Direct call to authenticated Hostinger SMTP endpoint
-      const response = await fetch('/api/cotacao', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      // 1. Tenta a API Express (Node.js) ou Apache PHP (/cotacao.php / /api/cotacao)
+      let sentSuccess = false;
 
-      const result = await response.json().catch(() => ({}));
+      try {
+        const response = await fetch('/api/cotacao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-      if (response.ok && result.success) {
-        console.info('[Hostinger SMTP Success]', result);
-      } else {
-        console.warn('[Hostinger SMTP Warning / Fallback to multi-channel]', result);
-        // Fallback to Web3Forms to ensure delivery even if server is static
-        fetch('https://api.web3forms.com/submit', {
+        if (response.ok) {
+          const result = await response.json().catch(() => ({}));
+          if (result.success) {
+            sentSuccess = true;
+            console.info('[Envio Servidor Hostinger Sucesso]', result);
+          }
+        }
+      } catch (e) {
+        console.warn('Tentando endpoint PHP alternativo...');
+      }
+
+      // 2. Se a rota Node.js não estiver ativa (hospedagem Apache/cPanel da Hostinger), tenta cotacao.php
+      if (!sentSuccess) {
+        try {
+          const phpRes = await fetch('/cotacao.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (phpRes.ok) {
+            const phpResult = await phpRes.json().catch(() => ({}));
+            if (phpResult.success) {
+              sentSuccess = true;
+              console.info('[Envio PHP Hostinger Sucesso]', phpResult);
+            }
+          }
+        } catch (e) {
+          console.warn('Servidor PHP não respondeu...');
+        }
+      }
+
+      // 3. Fallback com FormSubmit
+      if (!sentSuccess) {
+        fetch('https://formsubmit.co/ajax/vendas@amilvix.com.br', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
-            access_key: 'e39da33e-d67d-419b-ab09-fb47d51ee9cf',
-            from_name: 'Amilvix Landing Page',
-            subject: `[Nova Cotação Posital Fraba] ${formData.empresa} - Protocolo ${generatedProtocol}`,
-            to_email: 'vendas@amilvix.com.br',
-            replyto: formData.email,
             ...payload,
+            _captcha: 'false',
+            _template: 'table',
           }),
-        }).catch((e) => console.warn('Web3Forms backup:', e));
+        }).catch((err) => console.warn('FormSubmit backup:', err));
       }
     } catch (err) {
-      console.warn('Erro ao disparar cotação:', err);
+      console.warn('Erro ao despachar cotação:', err);
     } finally {
       setProtocolNumber(generatedProtocol);
       setIsSubmitting(false);

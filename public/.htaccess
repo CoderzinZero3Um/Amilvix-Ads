@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Permite que requisições para a API PHP funcionem diretamente
+  RewriteRule ^api/cotacao$ cotacao.php [L,QSA]
+  RewriteRule ^api/cotacao/$ cotacao.php [L,QSA]
+  RewriteRule ^cotacao.php$ - [L]
+
+  # Redireciona todas as outras rotas para o index.html da SPA
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
